@@ -1,29 +1,44 @@
 import { Context } from "telegraf";
 import { MainMenu } from "../views/mainMenu";
-import { SettingsMenu } from "../views/settingsMenu";
 import { InfoMenu } from "../views/infoMenu";
+import { SubscriptionMenu } from "../views/subscriptionMenu";
+
+const menuRegistry = {
+    main: MainMenu,
+    info: InfoMenu,
+    subscription: SubscriptionMenu,
+};
 
 export async function handleMenuAction(ctx: Context) {
-    const callbackData = (ctx.callbackQuery as ICallbackQuery).data;
-    if (!callbackData) return;
+    if (!ctx.callbackQuery || !("data" in ctx.callbackQuery)) {
+        await ctx.reply("Некорректный запрос.");
+        return;
+    }
 
-    const menus = {
-        main: new MainMenu(ctx),
-        settings: new SettingsMenu(ctx),
-        info: new InfoMenu(ctx),
-    };
-
+    const callbackData = ctx.callbackQuery.data || "";
     const [menu, action] = callbackData.split(":");
-    const menuInstance = menus[menu as keyof typeof menus];
 
-    if (menuInstance) {
-        await menuInstance.handleAction(action || menu);
+    const MenuClass = menuRegistry[menu as keyof typeof menuRegistry];
+
+    if (MenuClass) {
+        const menuInstance = new MenuClass(ctx);
+
+        // Удаляем старое сообщение (если возможно)
+        const chatId = ctx.chat?.id;
+        const callbackMessageId = ctx.callbackQuery.message?.message_id;
+
+        if (chatId && callbackMessageId) {
+            try {
+                await ctx.telegram.deleteMessage(chatId, callbackMessageId);
+            } catch (error) {
+                console.warn("Ошибка удаления старого меню:", error);
+            }
+        }
+
+        await menuInstance.handleAction(action || "");
     } else {
         await ctx.reply("Неизвестное меню.");
     }
 
     await ctx.answerCbQuery();
-}
-interface ICallbackQuery {
-    data: string;
 }

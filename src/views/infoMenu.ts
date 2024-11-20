@@ -1,37 +1,29 @@
 import { MenuBase } from "./menuBase";
-import { MainMenu } from "./mainMenu";
-import { getUser } from "../models/user.model";
+import { User } from "../models/user.model";
 
 export class InfoMenu extends MenuBase {
-    protected title = "Информация";
+    protected title = "Ваш аккаунт 🧑‍💻";
     protected text = "Информация о вашем аккаунте:";
     protected keyboard = {
-        inline_keyboard: [
-            [{ text: "Назад", callback_data: "info:main" }],
-        ],
+        inline_keyboard: [[{ text: "Назад", callback_data: "info:main" }]],
     };
 
     async handleAction(action: string): Promise<void> {
-        switch (action) {
-            case "main":
-                await new MainMenu(this.ctx).show();
-                break;
-            default:
-                await this.ctx.reply("Неизвестное действие.");
+        if (action === "main") {
+            await this.goTo(require("./mainMenu").MainMenu);
+        } else {
+            await this.handleUnknownAction();
         }
     }
 
     async show() {
-        const user = this.ctx.from;
-        if (user) {
-            const userInfo = await getUser(user.id);
-            this.text = userInfo
-                ? `Имя: ${userInfo.firstName}\nФамилия: ${userInfo.lastName}\nЮзернейм: ${userInfo.username}\nID: ${userInfo.telegramId}\nДата регистрации: ${new Date(
-                    userInfo.timestamp
-                ).toLocaleString()}`
-                : "Информация о вас отсутствует в базе данных.";
-        } else {
-            this.text = "Не удалось получить информацию о пользователе.";
+        try {
+            const user = await User.getById(this.ctx.from!.id);
+            this.text = user
+                ? `👤 *Имя:* ${user.firstName}\n👥 *Фамилия:* ${user.lastName}\n🔗 *Юзернейм:* ${user.username}\n🆔 *ID:* ${user.telegramId}\n📦 *Подписка:* ${user.subscription.type}`
+                : "❌ Информация о вас отсутствует в базе данных.";
+        } catch {
+            this.text = "🚨 Произошла ошибка при загрузке данных.";
         }
         await super.show();
     }
