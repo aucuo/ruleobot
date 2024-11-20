@@ -1,13 +1,25 @@
 import { Context } from "telegraf";
-import { MainMenu } from "../views/mainMenu";
-import { InfoMenu } from "../views/infoMenu";
-import { SubscriptionMenu } from "../views/subscriptionMenu";
+import fs from "fs";
+import path from "path";
 
-const menuRegistry = {
-    main: MainMenu,
-    info: InfoMenu,
-    subscription: SubscriptionMenu,
-};
+// Функция для динамического импорта классов меню
+async function getMenuClass(menuName: string) {
+    try {
+        const menuPath = path.join(__dirname, `../views/${menuName}Menu.ts`);
+        if (fs.existsSync(menuPath)) {
+            const importedModule = await import(menuPath);
+            return importedModule[`${capitalizeFirstLetter(menuName)}Menu`];
+        }
+    } catch (error) {
+        console.error(`Ошибка импорта меню ${menuName}:`, error);
+    }
+    return null;
+}
+
+// Вспомогательная функция для капитализации первого символа
+function capitalizeFirstLetter(string: string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
 
 export async function handleMenuAction(ctx: Context) {
     if (!ctx.callbackQuery || !("data" in ctx.callbackQuery)) {
@@ -18,7 +30,7 @@ export async function handleMenuAction(ctx: Context) {
     const callbackData = ctx.callbackQuery.data || "";
     const [menu, action] = callbackData.split(":");
 
-    const MenuClass = menuRegistry[menu as keyof typeof menuRegistry];
+    const MenuClass = await getMenuClass(menu);
 
     if (MenuClass) {
         const menuInstance = new MenuClass(ctx);
