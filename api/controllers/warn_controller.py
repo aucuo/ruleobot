@@ -13,9 +13,14 @@ class WarnController:
         warn_data = warn.to_dict()
 
         try:
-            warn_ref = self.db.push()  # Генерируем уникальный ID для варна
+            if not warn.warn_id:
+                raise ValueError("warn_id отсутствует в данных предупреждения")
+
+            # Устанавливаем warn_id в качестве ключа
+            warn_ref = self.db.child(warn.warn_id)
             warn_ref.set(warn_data)  # Сохраняем данные варна
-            return {"success": True, "message": "Предупреждение успешно добавлено"}
+
+            return {"success": True, "message": f"Предупреждение с ID {warn.warn_id} успешно добавлено"}
         except Exception as e:
             logger.error(f"Ошибка добавления предупреждения для пользователя {self.user_id}: {e}")
             return {"success": False, "error": str(e)}
@@ -39,4 +44,14 @@ class WarnController:
             return {"success": True, "message": f"Все предупреждения для '{self.user_id}' сброшены."}
         except Exception as e:
             logger.error(f"Ошибка сброса предупреждений для '{self.user_id}': {e}")
+            return {"success": False, "error": str(e)}
+
+    def delete(self, warn_id):
+        try:
+            warn_ref = self.db.child(warn_id)
+            warn_ref.set({})
+            logger.info(warn_id)
+            return {"success": True, "message": f"Предупреждение '{warn_id}' успешно удалено."}
+        except Exception as e:
+            logger.error(f"Ошибка удаления предупреждения '{warn_id}' для '{self.user_id}': {e}")
             return {"success": False, "error": str(e)}

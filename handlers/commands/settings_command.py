@@ -27,10 +27,10 @@ def settings_command(message: Message):
 
             settings_text = (
                 f"⚙️ Текущие настройки группы:\n"
-                f"- Фильтр спама (spam): {'Включен' if group.settings.spam_filter else 'Выключен'}\n"
-                f"- Фильтр нецензурной лексики (profanity): {'Включен' if group.settings.profanity_filter else 'Выключен'}\n"
-                f"- Фильтр капслока (caps): {'Включен' if group.settings.caps_filter else 'Выключен'}\n"
-                f"- Блокировка ссылок (links): {'Включен' if group.settings.links_filter else 'Выключен'}"
+                f"- Фильтр спама (spam): {'✅' if group.settings.spam_filter else '❌'}\n"
+                f"- Фильтр нецензурной лексики (profanity): {'✅' if group.settings.profanity_filter else '❌'}\n"
+                f"- Фильтр капслока (caps): {'✅' if group.settings.caps_filter else '❌'}\n"
+                f"- Блокировка ссылок (links): {'✅' if group.settings.links_filter else '❌'}"
             )
             bot.send_message(chat_id, settings_text)
         except Exception as e:
