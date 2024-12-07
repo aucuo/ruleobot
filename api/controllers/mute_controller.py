@@ -50,16 +50,17 @@ class MuteController:
             if not mutes_result["success"]:
                 return {"is_muted": False, "error": mutes_result["error"]}
 
+            now = datetime.now(timezone.utc)  # Всегда используем timezone-aware datetime
             active_mutes = [
                 mute for mute in mutes_result["mutes"]
-                if datetime.fromisoformat(mute.mute_until) > datetime.now(timezone.utc)  # Только активные
+                if datetime.fromisoformat(mute.mute_until).astimezone(timezone.utc) > now
             ]
 
             if active_mutes:
                 # Находим самый ранний активный мут
                 earliest_mute = min(active_mutes, key=lambda m: datetime.fromisoformat(m.mute_until))
-                mute_until = datetime.fromisoformat(earliest_mute.mute_until)
-                time_remaining = mute_until - datetime.now(timezone.utc)
+                mute_until = datetime.fromisoformat(earliest_mute.mute_until).astimezone(timezone.utc)
+                time_remaining = mute_until - now
 
                 return {
                     "is_muted": True,

@@ -9,15 +9,15 @@ class WarnController:
         self.user_id = user_id
         self.db = firebase_db.child("groups").child(group_id).child("members").child(user_id).child("warns")
 
-    def post(self, warn: Warn):
+    def post(self, warn):
         warn_data = warn.to_dict()
 
         try:
-            warn_ref = self.db.push()
-            warn_ref.set(warn_data)
-            return {"success": True, "message": f"Предупреждение успешно добавлено для '{self.user_id}'."}
+            warn_ref = self.db.push()  # Генерируем уникальный ID для варна
+            warn_ref.set(warn_data)  # Сохраняем данные варна
+            return {"success": True, "message": "Предупреждение успешно добавлено"}
         except Exception as e:
-            logger.error(f"Ошибка добавления предупреждения для '{self.user_id}': {e}")
+            logger.error(f"Ошибка добавления предупреждения для пользователя {self.user_id}: {e}")
             return {"success": False, "error": str(e)}
 
     def get(self):
@@ -31,4 +31,12 @@ class WarnController:
             return {"success": True, "warns": warns}
         except Exception as e:
             logger.error(f"Ошибка получения предупреждений для '{self.user_id}': {e}")
+            return {"success": False, "error": str(e)}
+
+    def clear(self):
+        try:
+            self.db.delete()  # Удаляем узел для предупреждений
+            return {"success": True, "message": f"Все предупреждения для '{self.user_id}' сброшены."}
+        except Exception as e:
+            logger.error(f"Ошибка сброса предупреждений для '{self.user_id}': {e}")
             return {"success": False, "error": str(e)}

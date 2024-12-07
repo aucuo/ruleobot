@@ -4,6 +4,8 @@ from api.controllers import MuteController, MemberController
 from api.models import Message, Member
 from bot import bot
 from config import logger
+from handlers import message_validator
+
 
 def message_observer(message):
     chat_id = message.chat.id
@@ -61,6 +63,8 @@ def message_observer(message):
             date=datetime.now(timezone.utc).isoformat()
         )
         member_controller.messages().post(user_message)
+
+        message_validator(message)
 
     except Exception as e:
         logger.error(f"Ошибка обработки сообщения от пользователя {user_id} в группе {chat_id}: {e}")

@@ -54,9 +54,7 @@ class MemberController:
 
     def get_by_username(self, username):
         try:
-            members_ref = firebase_db.child("groups").child(self.group_id).child("members")
-
-            query_result = members_ref.order_by_child("username").equal_to(username).get()
+            query_result = self.db.order_by_child("username").equal_to(username).get()
 
             if not query_result:
                 return {"success": False, "error": f"Пользователь с username '{username}' не найден."}
