@@ -43,7 +43,8 @@ def message_observer(message):
             username=username,
             first_name=first_name,
             last_name=last_name,
-            message_count=1  # Начинаем счётчик с 1
+            message_count=1,
+            entry_date=datetime.now()
         )
 
         # Проверяем, есть ли пользователь в базе
