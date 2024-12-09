@@ -30,7 +30,9 @@ def settings_command(message: Message):
                 f"- Фильтр спама (spam): {'✅' if group.settings.spam_filter else '❌'}\n"
                 f"- Фильтр нецензурной лексики (profanity): {'✅' if group.settings.profanity_filter else '❌'}\n"
                 f"- Фильтр капслока (caps): {'✅' if group.settings.caps_filter else '❌'}\n"
-                f"- Блокировка ссылок (links): {'✅' if group.settings.links_filter else '❌'}"
+                f"- Блокировка ссылок (links): {'✅' if group.settings.links_filter else '❌'}\n"
+                f"- ИИ фильтр (ai): {'✅' if group.settings.ai_filter else '❌'}\n"
+                f"- Small talk (talk): {'✅' if group.settings.small_talk else '❌'}"
             )
             bot.send_message(chat_id, settings_text)
         except Exception as e:
@@ -66,6 +68,10 @@ def settings_command(message: Message):
                 group.settings.caps_filter = (setting_value == "on")
             elif setting_name == "links":
                 group.settings.links_filter = (setting_value == "on")
+            elif setting_name == "ai":
+                group.settings.ai_filter = (setting_value == "on")
+            elif setting_name == "talk":
+                group.settings.small_talk = (setting_value == "on")
             else:
                 bot.send_message(chat_id, "❌ Указанная настройка не существует.")
                 return

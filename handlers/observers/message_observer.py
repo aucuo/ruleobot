@@ -1,12 +1,14 @@
+import os
 from datetime import datetime, timezone, timedelta
-
-from api.controllers import MuteController, MemberController
+from api.controllers import MuteController, MemberController, GroupController
 from api.models import Message, Member
 from bot import bot
 from config import logger
 from handlers import message_validator
 
+from utils import escape_markdown
 
+# Основной обработчик сообщений
 def message_observer(message):
     chat_id = message.chat.id
     user_id = message.from_user.id
@@ -36,8 +38,10 @@ def message_observer(message):
             logger.info(f"Удалено сообщение пользователя {user_id} в группе {chat_id} из-за активного мута.")
             return  # Сообщение удалено, больше ничего не выполняем
 
-        # Создаём или обновляем информацию о пользователе в БД
+        # Получаем настройки группы
         member_controller = MemberController(chat_id, user_id)
+
+        # Создаём или обновляем информацию о пользователе в БД
         member = Member(
             user_id=user_id,
             username=username,
@@ -65,6 +69,7 @@ def message_observer(message):
         )
         member_controller.messages().post(user_message)
 
+        # Валидируем сообщение
         message_validator(message)
 
     except Exception as e:

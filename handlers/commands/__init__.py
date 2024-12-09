@@ -6,3 +6,7 @@ from .settings_command import settings_command
 from .update_command import update_command
 from .warn_command import warn_command
 from .unwarn_command import unwarn_command
+from .messagestats_command import messagestats_command
+from .memberstats_command import memberstats_command
+from .ask_command import ask_command
+from .gem_command import gem_command

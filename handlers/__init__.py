@@ -1,31 +1,46 @@
+from telebot import types
 from bot import bot
-from handlers.commands import update_command, info_command, hello_command, mute_command, unmute_command, \
-    settings_command, warn_command, unwarn_command
-from handlers.commands.ask_command import ask_command
-from handlers.commands.memberstats_command import memberstats_command
-from handlers.commands.messagestats_command import messagestats_command
+from handlers.commands import (
+    update_command, info_command, hello_command, mute_command, unmute_command,
+    settings_command, warn_command, unwarn_command, ask_command,
+    memberstats_command, messagestats_command, gem_command
+)
+from handlers.commands.gem_command import gem_command
 from handlers.message_validator import message_validator
 from handlers.observers import observe_group_info, observe_member_update, message_observer, notify
 
 
 def register_commands():
-    bot.message_handler(commands=['update'])(update_command)
-    bot.message_handler(commands=['info'])(info_command)
-    bot.message_handler(commands=['hello'])(hello_command)
-    bot.message_handler(commands=['mute'])(mute_command)
-    bot.message_handler(commands=['unmute'])(unmute_command)
-    bot.message_handler(commands=['warn'])(warn_command)
-    bot.message_handler(commands=['unwarn'])(unwarn_command)
-    bot.message_handler(commands=['settings'])(settings_command)
-    bot.message_handler(commands=['messagestats'])(messagestats_command)
-    bot.message_handler(commands=['memberstats'])(memberstats_command)
-    bot.message_handler(commands=['ask'])(ask_command)
+    commands_list = {
+        'ask': (ask_command, "Отправить вопрос создателю группы"),
+        'gem': (gem_command, "Спросить у Gemini вопрос"),
+        'hello': (hello_command, "Установить приветственное сообщение (только для админа)"),
+        'info': (info_command, "Получить информацию о группе или пользователе"),  
+        'memberstats': (memberstats_command, "Посмотреть статистику новых участников"),  
+        'messagestats': (messagestats_command, "Получить статистику сообщений"),  
+        'mute': (mute_command, "Заглушить участника: /mute @username <минуты> <причина> (только для админа)"),  
+        'settings': (settings_command, "Просмотреть или изменить настройки группы: /settings <параметр> <on|off> (только для админа)"),  
+        'start': (update_command, "Запустить бота (только для админа)"),
+        'unmute': (unmute_command, "Снять мут с участника: /unmute @username (только для админа)"),
+        'unwarn': (unwarn_command, "Снять предупреждение у участника: /unwarn @username [-all] (только для админа)"),  
+        'update': (update_command, "Обновить данные группы (только для админа)"),  
+        'warn': (warn_command, "Выдать предупреждение участнику: /warn @username <причина> (только для админа)")  
+    }
+
+    for command, (handler, _) in commands_list.items():
+        bot.message_handler(commands=[command])(handler)
+
+    bot.set_my_commands([types.BotCommand(cmd, desc) for cmd, (_, desc) in commands_list.items()])
 
 def register_observers():
-    bot.message_handler(content_types=['new_chat_title', 'new_chat_description'])(
-        lambda m: observe_group_info(m))
-    bot.message_handler(content_types=['new_chat_members'])(
-        lambda m: observe_member_update(m))
-    bot.message_handler(content_types=['text'])(message_observer)
+    observers_list = {
+        'new_chat_title': observe_group_info,
+        'new_chat_description': observe_group_info,
+        'new_chat_members': observe_member_update,
+        'text': message_observer
+    }
+
+    for content_type, handler in observers_list.items():
+        bot.message_handler(content_types=[content_type])(handler)
 
     notify()

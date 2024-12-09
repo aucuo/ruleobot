@@ -5,6 +5,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Хранилище состояний ответов
+reply_states = {}
+
 def ask_command(message: Message):
     chat_id = str(message.chat.id)
     command_parts = message.text.split(maxsplit=1)
@@ -62,23 +65,45 @@ def handle_reply_callback(call):
         _, chat_id, user_id = call.data.split(":")
         chat_id, user_id = int(chat_id), int(user_id)
 
+        # Сохраняем состояние для пересылки ответа
+        reply_states[call.message.chat.id] = {
+            "chat_id": chat_id,
+            "user_id": user_id,
+            "question_text": call.message.text  # Сохраняем текст вопроса
+        }
+
         bot.send_message(
             call.message.chat.id,
             f"✏️ Напишите ваш ответ пользователю. Ваше сообщение будет переслано в группу.",
             reply_markup=None  # Убираем кнопку после нажатия
         )
-
-        # Регистрируем следующий ответ как текст, который будет отправлен пользователю
-        @bot.message_handler(func=lambda m: m.chat.id == call.message.chat.id)
-        def collect_reply(reply_message):
-            # Пересылаем ответ в исходную группу
-            bot.send_message(
-                chat_id,
-                f"Ответ от создателя группы:\n\n{reply_message.text}"
-            )
-            # Уведомляем создателя о пересылке
-            bot.send_message(call.message.chat.id, "✅ Ваш ответ отправлен.")
-            bot.remove_message_handler(collect_reply)  # Убираем обработчик после ответа
     except Exception as e:
-        logger.error(f"Ошибка обработки ответа: {e}")
+        logger.error(f"Ошибка обработки callback: {e}")
         bot.send_message(call.message.chat.id, "❌ Произошла ошибка при обработке ответа.")
+
+# Обработка ответа
+@bot.message_handler(func=lambda m: m.chat.id in reply_states)
+def collect_reply(reply_message):
+    try:
+        state = reply_states.pop(reply_message.chat.id)
+        chat_id = state["chat_id"]
+        question_text = state["question_text"]
+
+        # Формируем сообщение с упоминанием пользователя и текстом вопроса
+        response_message = (
+            f"{question_text}\n\n"
+            f"💬 Ответ: {reply_message.text}"
+        )
+
+        # Пересылаем ответ в исходную группу
+        bot.send_message(
+            chat_id,
+            response_message,
+            parse_mode="Markdown"
+        )
+
+        # Уведомляем администратора об успешной отправке
+        bot.send_message(reply_message.chat.id, "✅ Ваш ответ отправлен.")
+    except Exception as e:
+        logger.error(f"Ошибка при пересылке ответа: {e}")
+        bot.send_message(reply_message.chat.id, "❌ Произошла ошибка при пересылке ответа.")
